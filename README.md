@@ -1,5 +1,7 @@
 # Daikin Airconditioner/Air source heat pump data/control through Wi-Fi API
 
+[![Build Status](https://travis-ci.com/arska/python-daikinapi.svg?branch=master)](https://travis-ci.com/arska/python-daikinapi)
+
 ## Compatibility
 
 Tested with Daikin BRP069B41 Wi-Fi Interface and Daikin Emura FTXG-LS indoor unit
