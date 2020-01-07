@@ -4,7 +4,7 @@ daikinapi python module manifest
 from os.path import abspath, dirname, join
 from setuptools import setup
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 
 def read_file(filename):
@@ -20,6 +20,8 @@ setup(
     description="Get metrics from Daikin airconditioning unit wifi module",
     long_description=read_file("README.md"),
     long_description_content_type="text/markdown",
+    packages=["daikinapi"],
+    package_dir={"daikinapi": "."},
     keywords=["Daikin", "airconditioning", "API"],
     classifiers=[
         "Intended Audience :: Developers",
