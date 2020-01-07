@@ -1,0 +1,23 @@
+# IDEs & editors
+/.idea/
+
+# cache
+*.py[cod]
+__pycache__/
+
+# virtualenv
+/virtualenv/
+/venv/
+
+# packaging
+/daikinapi.egg-info/
+/dist/
+/build/
+
+# testing
+/.cache/
+/pytestdebug.log
+/.pytest_cache/
+/.tox/
+/.coverage
+/htmlcov/

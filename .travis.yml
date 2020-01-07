@@ -1,0 +1,22 @@
+sudo: false
+language: python
+python:
+  - "3.5"
+  - "3.6"      # current default Python on Travis CI
+  - "3.7"
+  - "3.7-dev"  # 3.7 development branch
+  - "3.8-dev"  # 3.8 development branch
+  - "nightly"  # nightly build
+  - "pypy3"  # currently Python 3.6.1,  PyPy 7.1.1-beta0
+
+install: pip install tox-travis
+script: tox
+
+deploy:
+  provider: pypi
+  skip_cleanup: true
+  skip_existing: true
+  user: __token__
+  password:
+  on:
+    branch: master # this is the default behaviour
