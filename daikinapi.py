@@ -13,48 +13,41 @@ class Daikin:
     Class to get information from Daikin Wireless LAN Connecting Adapter
     """
 
-    CONTROL_FIELDS = {
-        "f_dir": {
-            "0": "all wings stopped",
-            "1": "vertical wings motion",
-            "2": "horizontal wings motion",
-            "3": "vertical and horizontal wings motion",
-        },
-        "f_rate": {
-            "A": "auto",
-            "B": "silence",
-            "3": "fan level 1",
-            "4": "fan level 2",
-            "5": "fan level 3",
-            "6": "fan level 4",
-            "7": "fan level 5",
-        },
-        "mode": {
-            "0": "auto",
-            "1": "auto-1",
-            "2": "dehumidification",
-            "3": "cold",
-            "4": "hot",
-            "6": "fan",
-            "7": "auto-7",
-        },
-        "pow": {"1": "on", "0": "off"},
-        "shum": "target humidity, 0",
-        "stemp": "target temperature, AUTO:18-31, HOT:10-31, COLD:18-33",
-    }
+    _CONTROL_FIELDS = ["f_dir", "f_rate", "mode", "pow", "shum", "stemp"]
+    """list of fields that need to be defined for a change request"""
 
-    host = None
+    ATTRIBUTES = [
+        "power",
+        "target_temperature",
+        "target_humidity",
+        "mode",
+        "fan_rate",
+        "fan_direction",
+        "mac",
+        "name",
+        "rev",
+        "ver",
+        "type",
+        "today_runtime",
+        "year_power",
+        "price_int",
+        "compressor_frequency",
+        "inside_temperature",
+        "outside_temperature",
+    ]
+
+    _host = None
 
     def __init__(self, host):
         """
         Initialize Daikin Aircon API
         :param host: host name/IP address to connect to
         """
-        self.host = host
+        self._host = host
 
     def _get(self, path):
-        """ Internal function to connect to and get information"""
-        response = requests.get("http://" + self.host + path)
+        """ Internal function to connect to and get any information"""
+        response = requests.get("http://" + self._host + path)
         response.raise_for_status()
         logging.debug(response.text)
         if not len(response.text) > 0 or not response.text[0:4] == "ret=":
@@ -71,7 +64,7 @@ class Daikin:
     def _set(self, path, data):
         """ Internal function to connect to and update information"""
         logging.debug(data)
-        response = requests.get("http://" + self.host + path, data)
+        response = requests.get("http://" + self._host + path, data)
         response.raise_for_status()
         logging.debug(response.text)
 
@@ -142,13 +135,15 @@ class Daikin:
         b_stemp=21.0,b_shum=0,alert=255,f_rate=A,f_dir=0,b_f_rate=A,b_f_dir=0,dfr1=5,
         dfr2=5,dfr3=5,dfr4=A,dfr5=A,dfr6=5,dfr7=5,dfrh=5,dfd1=0,dfd2=0,dfd3=0,dfd4=0,
         dfd5=0,dfd6=0,dfd7=0,dfdh=0
-        :param all_fields: return all fields or just the relevant CONTROL_FIELDS
+        :param all_fields: return all fields or just the most relevant f_dir, f_rate,
+        mode, pow, shum,
+        stemp
         :return: dict
         """
         data = self._get("/aircon/get_control_info")
         if all_fields:
             return data
-        return {key: data[key] for key in self.CONTROL_FIELDS}
+        return {key: data[key] for key in self._CONTROL_FIELDS}
 
     def _get_model(self):
         """
@@ -173,7 +168,7 @@ class Daikin:
     def power(self):
         """
         unit on/off
-        :return: power "1": "ON", "0":"OFF"
+        :return: "1" for ON, "0" for OFF
         """
         return int(self._get_control()["pow"])
 
@@ -181,7 +176,8 @@ class Daikin:
     def target_temperature(self):
         """
         target temperature
-        :return: AUTO:18-31, HOT:10-31, COLD:18-33
+        range of accepted values determined by mode: AUTO:18-31, HOT:10-31, COLD:18-33
+        :return: degrees centigrade
         """
         return float(self._get_control()["stemp"])
 
@@ -247,22 +243,13 @@ class Daikin:
     def _control_set(self, key, value):
         """
         set a get_control() item via one of the property.setters
+
+        will fetch the current settings to change this one value, so this is not safe
+        against concurrent changes
         :param key: item name e.g. "pow"
         :param value: set to value e.g. 1, "1" or "ON"
         :return: None
         """
-        if isinstance(value, int):
-            value = str(value)
-        elif isinstance(value, float):
-            value = str(value)
-        elif value in self.CONTROL_FIELDS[key].keys():
-            pass
-        else:
-            reverse = {v: k for k, v in self.CONTROL_FIELDS[key]}
-            if value in reverse:
-                value = reverse[value]
-            else:
-                raise ValueError("invalid value specified")
         data = self._get_control()
         data[key] = value
         self._set("/aircon/set_control_info", data)
@@ -343,7 +330,7 @@ class Daikin:
     def inside_temperature(self):
         """
         inside current temperature
-        :return:
+        :return: degrees centigrade
         """
         return float(self._get_sensor()["htemp"])
 
@@ -351,7 +338,7 @@ class Daikin:
     def outside_temperature(self):
         """
         outside current temperature
-        :return:
+        :return: degrees centigrade
         """
         return float(self._get_sensor()["otemp"])
 
@@ -375,5 +362,5 @@ class Daikin:
 
     def __str__(self):
         return "Daikin(host={0},name={1},mac={2})".format(
-            self.host, self.name, self.mac
+            self._host, self.name, self.mac
         )

@@ -29,30 +29,8 @@ else:
 
 logging.debug("starting with arguments: %s", ARGS)
 
-ATTRIBUTES = [
-    "compressor_frequency",
-    "fan_direction",
-    "fan_rate",
-    "host",
-    "inside_temperature",
-    "mac",
-    "mode",
-    "name",
-    "outside_temperature",
-    "power",
-    "price_int",
-    "rev",
-    "target_humidity",
-    "target_temperature",
-    "today_runtime",
-    "type",
-    "ver",
-    "year_power",
-]
-
-
 for host in ARGS.hosts:
     API = Daikin(host)
     print(API)
-    for attribute in ATTRIBUTES:
+    for attribute in API.ATTRIBUTES:
         print(attribute, getattr(API, attribute))
