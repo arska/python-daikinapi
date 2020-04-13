@@ -29,7 +29,7 @@ class Daikin:
         "ver",
         "type",
         "today_runtime",
-        "year_power",
+        "current_month_power_consumption",
         "price_int",
         "compressor_frequency",
         "inside_temperature",
