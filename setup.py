@@ -4,7 +4,7 @@ daikinapi python module manifest
 from os.path import abspath, dirname, join
 from setuptools import setup
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 
 def read_file(filename):

@@ -98,7 +98,7 @@ class Daikin:
     def _get_year(self):
         """
         Example:
-        ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=1
+        ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/1
         :return: dict
         """
         return self._get("/aircon/get_year_power")
@@ -303,12 +303,12 @@ class Daikin:
         return int(self._get_week()["today_runtime"])
 
     @property
-    def year_power(self):
+    def current_month_power_consumption(self):
         """
-        energy consumption this year?
-        :return: energy consumption this year?
+        energy consumption
+        :return: current month to date energy consumption in kWh
         """
-        return int(self._get_year()["this_year"])
+        return int(self._get_year()["this_year"].split("/")[-1])
 
     @property
     def price_int(self):
