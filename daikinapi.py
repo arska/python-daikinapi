@@ -34,6 +34,8 @@ class Daikin:
         "compressor_frequency",
         "inside_temperature",
         "outside_temperature",
+        "daily_consumption",
+        "hourly_consumption"
     ]
 
     _host = None
@@ -163,6 +165,23 @@ class Daikin:
         :return: dict
         """
         return self._get("/common/get_remote_method")
+
+    def _get_week_power(self):
+        """
+        Example:
+        ret=OK,s_dayw=0,week_heat=39/95/75/58/62/54/41/21/41/29/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
+        :return: dict
+        """
+        return self._get("/aircon/get_week_power_ex")
+
+    def _get_day_power(self):
+        """
+        Example:
+        ret=OK,curr_day_heat=0/0/0/0/0/0/0/0/6/6/6/6/4/4/4/3/0/0/0/0/0/0/0/0,prev_1day_heat=0/0/0/0/0/0/11/7/6/6/6/4/4/4/4/5/4/5/5/5/5/5/5/4,curr_day_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0,prev_1day_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0
+        :return: dict
+        """
+        return self._get("/aircon/get_day_power_ex")
+
 
     @property
     def power(self):
@@ -303,6 +322,33 @@ class Daikin:
         return int(self._get_week()["today_runtime"])
 
     @property
+    def daily_consumption(self):
+        """
+        power consumption in 0.1kWh for past 14 days (today is the 1st value)
+        :return: a dict with breadown heat/cool
+        """
+        week_power = self._get_week_power()
+        return {
+            'heat': [int(c) * 1.0 / 10 for c in week_power["week_heat"].split("/")],
+            'cool': [int(c) * 1.0 / 10 for c in week_power["week_cool"].split("/")]
+        }
+
+    @property
+    def hourly_consumption(self):
+        """
+        power consumption in 0.1kWh for past 48 hours (current hour is the 1st value)
+        :return: a dict with breadown heat/cool
+        """
+        day_power = self._get_day_power()
+        return {
+            'heat': [int(c) * 1.0 / 10 for c in day_power["curr_day_heat"].split("/")]
+                + [int(c) * 1.0 / 10 for c in day_power["prev_1day_heat"].split("/")],
+            'cool': [int(c) * 1.0 / 10 for c in day_power["curr_day_cool"].split("/")]
+                + [int(c) * 1.0 / 10 for c in day_power["prev_1day_cool"].split("/")]
+        }
+
+
+    @property
     def current_month_power_consumption(self):
         """
         energy consumption
@@ -358,6 +404,8 @@ class Daikin:
         fields.update(self._get_control())
         fields.update(self._get_model())
         fields.update(self._get_remote())
+        fields.update(self._get_week_power())
+        fields.update(self._get_day_power())
         return fields
 
     def __str__(self):
