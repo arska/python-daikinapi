@@ -4,8 +4,42 @@ Python module to get metrics from and control Daikin airconditioners
 
 import logging
 import urllib.parse
+import datetime
 
 import requests
+
+
+def _make_time(mins):
+    return (datetime.datetime.combine(datetime.date.today(), datetime.time(0, 0)) + datetime.timedelta(minutes=mins)).time()
+
+
+def _make_mins(time):
+    return "{:04}".format(time.hour * 60 + time.minute)
+
+
+class Schedule:
+    def __init__(self, data):
+        # 11419.00420A----10
+        # 10-----1260-------
+        # 012345678901234567
+        self.active = data[0] == '1'
+        self.powered = data[1] == '1'
+        self.time = _make_time(int(data[7:11]))
+        if self.powered:
+            self.mode = data[2]
+            self.temp = float(data[3:7])
+            self.fan_rate = data[11]
+        else:
+            self.mode = '-'
+            self.temp = 0
+            self.fan_rate = '-'
+
+    def to_str(self):
+        return "{}{}{}{}{}{}----{}".format('1' if self.active else '0', '1' if self.powered else '0', self.mode, self.temp if self.powered else '----', _make_mins(self.time), self.fan_rate, '10' if self.powered else '--')
+
+
+    def __repr__(self):
+        return "[active={active} powered={powered} time={time} mode={mode} temp={temp} fan_rate={fan_rate}]".format(**self.__dict__)
 
 
 class Daikin:
@@ -182,6 +216,14 @@ class Daikin:
         """
         return self._get("/aircon/get_day_power_ex")
 
+
+    def _get_scdltimer(self):
+        """
+        Example:
+        ret=OK,format=v1,target=1,en_scdltimer=1,moc=2,mo1=11415.01410B----10,mo2=11419.00365A----10,tuc=2,tu1=11415.01410B----10,tu2=11419.00365A----10,wec=2,we1=11415.01410B----10,we2=11419.00365A----10,thc=2,th1=11415.01410B----10,th2=11419.00365A----10,frc=2,fr1=11415.01410B----10,fr2=11419.00365A----10,sac=2,sa1=11419.00365A----10,sa2=11415.01410B----10,suc=2,su1=11419.00365A----10,su2=11415.01410B----10
+        :return: dict
+        """
+        return self._get("/aircon/get_scdltimer_body?target=1")
 
     @property
     def power(self):
@@ -388,6 +430,43 @@ class Daikin:
         """
         return float(self._get_sensor()["otemp"])
 
+
+    @property
+    def schedule(self):
+        d = self._get_scdltimer()
+        sched = []
+        for day in ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su']:
+            day_count = int(d["{}c".format(day)])
+            day_tasks = []
+            for i in range(day_count):
+                day_tasks.append(Schedule(d["{}{}".format(day, i+1)]))
+            sched.append(day_tasks)
+        return sched
+
+    @schedule.setter
+    def schedule(self, value):
+        if not isinstance(value, list) or not len(value) == 7:
+            raise Exception("Invalid schedule")
+
+        data = self._get_scdltimer()
+        for i, day in enumerate(['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su']):
+            data["{}c".format(day)] = len(value[i])
+            for j in range(6):
+                k = "{}{}".format(day, j+1)
+                if k in data:
+                    del data[k]
+            for j, sched in enumerate(value[i]):
+                if not isinstance(sched, Schedule):
+                    raise Exception("Invalid schedule")
+                data["{}{}".format(day, j+1)] = sched.to_str()
+
+        # Remove keys from output not needed in input
+        del data["en_scdltimer"]
+        del data["ret"]
+
+        self._set("/aircon/set_scdltimer_body", data)
+
+
     def _get_all(self):
         """
         Get and aggregate all data endpoints
@@ -406,6 +485,7 @@ class Daikin:
         fields.update(self._get_remote())
         fields.update(self._get_week_power())
         fields.update(self._get_day_power())
+        fields.update(self._get_scdltimer())
         return fields
 
     def __str__(self):
