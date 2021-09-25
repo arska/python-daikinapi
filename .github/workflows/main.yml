@@ -10,7 +10,7 @@ jobs:
     name: "run tox"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9, pypy3]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test with tox
       env:
-        CODECOV_TOKEN: "889b90e8-e5a8-4139-aef6-87e6f2e1a0a4"
+        CODECOV_TOKEN: "ec0bfe65-87df-4df5-b794-228c3b32ed96"
       run: tox
       
   package:

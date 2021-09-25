@@ -24,7 +24,6 @@ setup(
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
@@ -34,7 +33,7 @@ setup(
     author="Aarno Aukia",
     author_email="aarno@aukia.com",
     license="MIT",
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     extras_require={"dev": ["tox"]},
     install_requires=["requests>=2", "urllib3>=1.24"],
     setup_requires=["setuptools-git-versioning"],
