@@ -1,6 +1,7 @@
 # Daikin Airconditioner/Air source heat pump data/control through Wi-Fi API
 
-[![Build Status](https://travis-ci.com/arska/python-daikinapi.svg?branch=master)](https://travis-ci.com/arska/python-daikinapi)
+[![Python package](https://github.com/arska/python-daikinapi/actions/workflows/main.yml/badge.svg)](https://github.com/arska/python-daikinapi/actions/workflows/main.yml)
+[![PyPI version](https://badge.fury.io/py/daikinapi.svg)](https://badge.fury.io/py/daikinapi)
 
 ## Compatibility
 
