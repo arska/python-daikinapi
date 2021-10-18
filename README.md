@@ -44,6 +44,10 @@ Based on exisiting reverse-engineering work:
 * https://github.com/ael-code/daikin-aricon-pylib/
 * https://github.com/ael-code/daikin-control/wiki/API-System
 
+### Not compatible with
+
+* FVXM-A
+
 ## Usage
 
 see example.py for runnable example
