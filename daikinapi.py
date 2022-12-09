@@ -34,6 +34,7 @@ class Daikin:
         "compressor_frequency",
         "inside_temperature",
         "outside_temperature",
+        "wifi_settings",
     ]
 
     _host = None
