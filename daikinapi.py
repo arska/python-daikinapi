@@ -399,6 +399,7 @@ class Daikin:
         fields.update(self._get_control())
         fields.update(self._get_model())
         fields.update(self._get_remote())
+        fields.update(self._get_wifi())
         return fields
 
     def __str__(self):
