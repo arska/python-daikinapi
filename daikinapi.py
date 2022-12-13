@@ -92,10 +92,10 @@ class Daikin:
         """
         Example (ex=False):
         ret=OK,today_runtime=601,datas=0/0/0/0/0/0/1000
-            (datas: values in Watts, last day last)
+            (datas: values in Watt/hour, last day last)
         Example (ex=True):
         ret=OK,s_dayw=2,week_heat=10/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
-            (week_*: values in 100Watts, last day first)
+            (week_*: values in 100Watt/hour, last day first)
         :return: dict
         """
         return self._get("/aircon/get_week_power" + ("_ex" if ex else ""))
@@ -104,10 +104,10 @@ class Daikin:
         """
         Example (ex=False):
         ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/0/0/0/0/0/0/1
-            (*_year: values in 100Watts per month (jan-dec))
+            (*_year: values in 100Watt/hour per month (jan-dec))
         Example (ex=True):
         ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
-            (*_year_*: values in 100Watts per month (jan-dec))
+            (*_year_*: values in 100Watt/hour per month (jan-dec))
         :return: dict
         """
         return self._get("/aircon/get_year_power" + ("_ex" if ex else ""))
@@ -368,12 +368,12 @@ class Daikin:
         """
         return int(self._get_week()["today_runtime"])
 
-    def today_power_consumption_ex(self, ex=True, mode="heat"):
+    def today_energy_consumption_ex(self, ex=True, mode="heat"):
         """
-        unit power consumption today (in Watts)
+        unit energy consumption today (in Watt/hour)
         :param ex: boolean indicating whether to take form '_ex'
         :param mode: string from ("heat", "cool") describing mode of operation; ignored if ex==False
-        :return: Watts of power consumption
+        :return: Watt/hour of energy consumption
         """
         assert not ex or mode in ("heat", "cool"), 'mode should be from ("heat", "cool") if ex==True'
         res = self._get_week(ex=ex)
@@ -383,14 +383,14 @@ class Daikin:
         return res * 100 if ex else res
 
     @property
-    def today_power_consumption(self, ex=False):
+    def today_energy_consumption(self, ex=False):
         """
-        unit power consumption today (in Watts)
-        :return: Watts of power consumption
+        unit energy consumption today (in Watt/hour)
+        :return: Watt/hour of power consumption
         """
-        return self.today_power_consumption_ex(ex=ex, mode=None)
+        return self.today_energy_consumption_ex(ex=ex, mode=None)
 
-    def month_power_consumption(self, month=None):
+    def month_energy_consumption(self, month=None):
         """
         energy consumption
         :param month: optional argument to request a particular month-of-year (january=1); None defaults to current month
@@ -409,7 +409,7 @@ class Daikin:
         energy consumption
         :return: current month to date energy consumption in kWh or None if not retrievable
         """
-        return self.month_power_consumption(month=month)
+        return self.month_energy_consumption(month=month)
 
     @property
     def price_int(self):
