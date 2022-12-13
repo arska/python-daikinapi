@@ -51,7 +51,7 @@ class Daikin:
         response = requests.get("http://" + self._host + path)
         response.raise_for_status()
         logging.debug(response.text)
-        if not len(response.text) > 0 or not response.text[0:4] == "ret=":
+        if not len(response.text) > 0 or not response.text[0:4] == "ret=" or response.text[0:6] == "ret=NG":
             return None
         fields = {}
         for group in response.text.split(","):
@@ -88,21 +88,29 @@ class Daikin:
         """
         return self._get("/common/get_notify")
 
-    def _get_week(self):
+    def _get_week(self, ex=False):
         """
-        Example:
+        Example (ex=False):
         ret=OK,today_runtime=601,datas=0/0/0/0/0/0/1000
+            (datas: values in Watts, last day last)
+        Example (ex=True):
+        ret=OK,s_dayw=2,week_heat=10/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
+            (week_*: values in 100Watts, last day first)
         :return: dict
         """
-        return self._get("/aircon/get_week_power")
+        return self._get("/aircon/get_week_power" + ("_ex" if ex else ""))
 
-    def _get_year(self):
+    def _get_year(self, ex=False):
         """
-        Example:
-        ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/1
+        Example (ex=False):
+        ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/0/0/0/0/0/0/1
+            (*_year: values in 100Watts per month (jan-dec))
+        Example (ex=True):
+        ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
+            (*_year_*: values in 100Watts per month (jan-dec))
         :return: dict
         """
-        return self._get("/aircon/get_year_power")
+        return self._get("/aircon/get_year_power" + ("_ex" if ex else ""))
 
     def _get_target(self):
         """
@@ -172,6 +180,14 @@ class Daikin:
         :return: dict
         """
         return self._get("/common/get_wifi_setting")
+
+    def _get_datetime(self):
+        """
+        Example:
+        ret=OK,sta=1,cur=2022/12/01 22:01:02,reg=eu,dst=1,zone=10
+        :return:
+        """
+        return self._get("/common/get_datetime")
 
     def _do_reboot(self):
         return self._get("/common/reboot")
@@ -251,6 +267,15 @@ class Daikin:
         """
         wifi = self._get_wifi()
         return wifi['ssid'], wifi['key']
+
+    @property
+    def datetime(self):
+        """
+        datetime on the device
+        :return: string of datetime on the device (yyyy/mm/dd HH:MM:SS), or None if not retrievable
+        """
+        datetime = self._get_datetime()["cur"]
+        return datetime if datetime != "-" else None
 
     @power.setter
     def power(self, value):
@@ -343,13 +368,48 @@ class Daikin:
         """
         return int(self._get_week()["today_runtime"])
 
+    def today_power_consumption_ex(self, ex=True, mode="heat"):
+        """
+        unit power consumption today (in Watts)
+        :param ex: boolean indicating whether to take form '_ex'
+        :param mode: string from ("heat", "cool") describing mode of operation; ignored if ex==False
+        :return: Watts of power consumption
+        """
+        assert not ex or mode in ("heat", "cool"), 'mode should be from ("heat", "cool") if ex==True'
+        res = self._get_week(ex=ex)
+        if res is None:
+            return None
+        res = int(res["week_%s" % mode if ex else "datas"].split("/")[0 if ex else -1])
+        return res * 100 if ex else res
+
     @property
-    def current_month_power_consumption(self):
+    def today_power_consumption(self, ex=False):
+        """
+        unit power consumption today (in Watts)
+        :return: Watts of power consumption
+        """
+        return self.today_power_consumption_ex(ex=ex, mode=None)
+
+    def month_power_consumption(self, month=None):
         """
         energy consumption
-        :return: current month to date energy consumption in kWh
+        :param month: optional argument to request a particular month-of-year (january=1); None defaults to current month
+        :return: current-of-year energy consumption in kWh or None if not retrievable
         """
-        return int(self._get_year()["this_year"].split("/")[-1])
+        if month is None:
+            dt = self.datetime
+            if dt is None:
+                return None
+            month = int(dt.split("/")[1])
+        return int(self._get_year()["this_year"].split("/")[month-1]) / 10.0
+
+    @property
+    def current_month_power_consumption(self, month=None):
+        """
+        energy consumption
+        :return: current month to date energy consumption in kWh or None if not retrievable
+        """
+        return self.month_power_consumption(month=month)
 
     @property
     def price_int(self):
@@ -407,6 +467,7 @@ class Daikin:
         fields.update(self._get_control())
         fields.update(self._get_model())
         fields.update(self._get_remote())
+        fields.update(self._get_datetime())
         return fields
 
     def __str__(self):
