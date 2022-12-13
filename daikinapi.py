@@ -363,7 +363,7 @@ class Daikin:
     def compressor_frequency(self):
         """
         compressor frequency/power
-        :return:
+        :return: The outside compressor load, normally between 12 to 84 max
         """
         return int(self._get_sensor()["cmpfreq"])
 
@@ -374,6 +374,14 @@ class Daikin:
         :return: degrees centigrade
         """
         return float(self._get_sensor()["htemp"])
+
+    @property
+    def inside_humidity(self):
+        """
+        inside relative humidity
+        :return: percent
+        """
+        return float(self._get_sensor()["hhum"])
 
     @property
     def outside_temperature(self):
