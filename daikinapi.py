@@ -29,12 +29,14 @@ class Daikin:
         "ver",
         "type",
         "today_runtime",
-        "current_month_power_consumption",
+        "today_energy_consumption",
+        "current_month_energy_consumption",
         "price_int",
         "compressor_frequency",
         "inside_temperature",
         "outside_temperature",
         "wifi_settings",
+        "datetime"
     ]
 
     _host = None
@@ -96,6 +98,7 @@ class Daikin:
         Example (ex=True):
         ret=OK,s_dayw=2,week_heat=10/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
             (week_*: values in 100Watt/hour, last day first)
+        Probably 'ex' refers to "exclusively this device"
         :return: dict
         """
         return self._get("/aircon/get_week_power" + ("_ex" if ex else ""))
@@ -108,6 +111,7 @@ class Daikin:
         Example (ex=True):
         ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
             (*_year_*: values in 100Watt/hour per month (jan-dec))
+        Probably 'ex' refers to "exclusively this device"
         :return: dict
         """
         return self._get("/aircon/get_year_power" + ("_ex" if ex else ""))
@@ -372,6 +376,7 @@ class Daikin:
         """
         unit energy consumption today (in Watt/hour)
         :param ex: boolean indicating whether to take form '_ex'
+            Probably 'ex' refers to "exclusively this device"
         :param mode: string from ("heat", "cool") describing mode of operation; ignored if ex==False
         :return: Watt/hour of energy consumption
         """
@@ -386,7 +391,7 @@ class Daikin:
     def today_energy_consumption(self, ex=False):
         """
         unit energy consumption today (in Watt/hour)
-        :return: Watt/hour of power consumption
+        :return: Watt/hour of energy consumption
         """
         return self.today_energy_consumption_ex(ex=ex, mode=None)
 
@@ -404,7 +409,7 @@ class Daikin:
         return int(self._get_year()["this_year"].split("/")[month-1]) / 10.0
 
     @property
-    def current_month_power_consumption(self, month=None):
+    def current_month_energy_consumption(self, month=None):
         """
         energy consumption
         :return: current month to date energy consumption in kWh or None if not retrievable
