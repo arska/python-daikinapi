@@ -34,6 +34,7 @@ class Daikin:
         "compressor_frequency",
         "inside_temperature",
         "outside_temperature",
+        "wifi_settings",
     ]
 
     _host = None
@@ -55,7 +56,7 @@ class Daikin:
         fields = {}
         for group in response.text.split(","):
             element = group.split("=")
-            if element[0] == "name":
+            if element[0] in ("name", "key"):
                 fields[element[0]] = urllib.parse.unquote(element[1])
             else:
                 fields[element[0]] = element[1]
@@ -164,6 +165,32 @@ class Daikin:
         """
         return self._get("/common/get_remote_method")
 
+    def _get_wifi(self):
+        """
+        Example:
+        ret=OK,ssid=wireless_ssid,security=mixed,key=%77%69%66%69%6b%65%79,link=1
+        :return: dict
+        """
+        return self._get("/common/get_wifi_setting")
+
+    def _do_reboot(self):
+        return self._get("/common/reboot")
+
+    def _set_wifi(self, ssid, key, do_reboot=True):
+        """
+        Set the wifi settings
+        :param ssid: ssid of the new network
+        :param key: key of the new network
+        :param do_reboot: boolean indicating whether to reboot, to activate the settings
+        :return: None
+        """
+        key_encoded = "".join('%' + hex(ord(c))[2:].rjust(2, '0') for c in key)
+        data = {'ssid': ssid, 'key': key_encoded, 'security': 'mixed'}
+        self._set("/common/set_wifi_setting", data)
+        if do_reboot:
+            res = self._do_reboot()
+            logging.debug("Reboot ordered to activate wifi changes: %s" % res)
+
     @property
     def power(self):
         """
@@ -216,6 +243,15 @@ class Daikin:
         """
         return int(self._get_control()["f_dir"])
 
+    @property
+    def wifi_settings(self):
+        """
+        wifi settings
+        :return: tuple containing ssid and key of wifi network
+        """
+        wifi = self._get_wifi()
+        return wifi['ssid'], wifi['key']
+
     @power.setter
     def power(self, value):
         self._control_set("pow", value)
@@ -239,6 +275,11 @@ class Daikin:
     @fan_direction.setter
     def fan_direction(self, value):
         self._control_set("f_dir", value)
+
+    @wifi_settings.setter
+    def wifi_settings(self, value):
+        ssid, key = value
+        self._set_wifi(ssid, key)
 
     def _control_set(self, key, value):
         """
@@ -358,6 +399,7 @@ class Daikin:
         fields.update(self._get_control())
         fields.update(self._get_model())
         fields.update(self._get_remote())
+        fields.update(self._get_wifi())
         return fields
 
     def __str__(self):
