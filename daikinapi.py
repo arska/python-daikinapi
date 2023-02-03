@@ -29,8 +29,8 @@ class Daikin:
         "ver",
         "type",
         "today_runtime",
-        "today_energy_consumption",
-        "current_month_energy_consumption",
+        "today_power_consumption",
+        "current_month_power_consumption",
         "price_int",
         "compressor_frequency",
         "inside_temperature",
@@ -94,18 +94,10 @@ class Daikin:
         """
         Example (ex=False):
         ret=OK,today_runtime=601,datas=0/0/0/0/0/0/1000
-<<<<<<< HEAD
-            (datas: values in Watt/hour, last day last)
-        Example (ex=True):
-        ret=OK,s_dayw=2,week_heat=10/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
-            (week_*: values in 100Watt/hour, last day first)
-        Probably 'ex' refers to "exclusively this device"
-=======
             (datas: values in Watts, last day last)
         Example (ex=True):
         ret=OK,s_dayw=2,week_heat=10/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
             (week_*: values in 100Watts, last day first)
->>>>>>> 038728d (corrected existing power consumption attributes and added additional power consumption values)
         :return: dict
         """
         return self._get("/aircon/get_week_power" + ("_ex" if ex else ""))
@@ -114,18 +106,10 @@ class Daikin:
         """
         Example (ex=False):
         ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/0/0/0/0/0/0/1
-<<<<<<< HEAD
-            (*_year: values in 100Watt/hour per month (jan-dec))
-        Example (ex=True):
-        ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
-            (*_year_*: values in 100Watt/hour per month (jan-dec))
-        Probably 'ex' refers to "exclusively this device"
-=======
             (*_year: values in 100Watts per month (jan-dec))
         Example (ex=True):
         ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
             (*_year_*: values in 100Watts per month (jan-dec))
->>>>>>> 038728d (corrected existing power consumption attributes and added additional power consumption values)
         :return: dict
         """
         return self._get("/aircon/get_year_power" + ("_ex" if ex else ""))
