@@ -47,7 +47,7 @@ class Daikin:
 
     def _get(self, path):
         """ Internal function to connect to and get any information"""
-        response = requests.get("http://" + self._host + path)
+        response = requests.get("http://" + self._host + path, timeout=10)
         response.raise_for_status()
         logging.debug(response.text)
         if not len(response.text) > 0 or not response.text[0:4] == "ret=":
@@ -64,7 +64,7 @@ class Daikin:
     def _set(self, path, data):
         """ Internal function to connect to and update information"""
         logging.debug(data)
-        response = requests.get("http://" + self._host + path, data)
+        response = requests.get("http://" + self._host + path, data, timeout=10)
         response.raise_for_status()
         logging.debug(response.text)
 
