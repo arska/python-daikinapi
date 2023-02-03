@@ -36,7 +36,7 @@ class Daikin:
         "inside_temperature",
         "outside_temperature",
         "wifi_settings",
-        "datetime"
+        "datetime",
     ]
 
     _host = None
@@ -49,11 +49,15 @@ class Daikin:
         self._host = host
 
     def _get(self, path):
-        """ Internal function to connect to and get any information"""
+        """Internal function to connect to and get any information"""
         response = requests.get("http://" + self._host + path, timeout=10)
         response.raise_for_status()
         logging.debug(response.text)
-        if not len(response.text) > 0 or not response.text[0:4] == "ret=" or response.text[0:6] == "ret=NG":
+        if (
+            not len(response.text) > 0
+            or not response.text[0:4] == "ret="
+            or response.text[0:6] == "ret=NG"
+        ):
             return None
         fields = {}
         for group in response.text.split(","):
@@ -65,7 +69,7 @@ class Daikin:
         return fields
 
     def _set(self, path, data):
-        """ Internal function to connect to and update information"""
+        """Internal function to connect to and update information"""
         logging.debug(data)
         response = requests.get("http://" + self._host + path, data, timeout=10)
         response.raise_for_status()
@@ -108,7 +112,10 @@ class Daikin:
         ret=OK,previous_year=0/0/0/0/0/0/0/0/0/0/0/0,this_year=0/0/0/0/0/0/0/0/0/1
             (*_year: values in 100Watts per month (jan-dec))
         Example (ex=True):
-        ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
+            ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/1,
+            prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,
+            curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,
+            prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
             (*_year_*: values in 100Watts per month (jan-dec))
         :return: dict
         """
@@ -202,12 +209,12 @@ class Daikin:
         :param do_reboot: boolean indicating whether to reboot, to activate the settings
         :return: None
         """
-        key_encoded = "".join('%' + hex(ord(c))[2:].rjust(2, '0') for c in key)
-        data = {'ssid': ssid, 'key': key_encoded, 'security': 'mixed'}
+        key_encoded = "".join("%" + hex(ord(c))[2:].rjust(2, "0") for c in key)
+        data = {"ssid": ssid, "key": key_encoded, "security": "mixed"}
         self._set("/common/set_wifi_setting", data)
         if do_reboot:
             res = self._do_reboot()
-            logging.debug("Reboot ordered to activate wifi changes: %s" % res)
+            logging.debug("Reboot ordered to activate wifi changes: %s", res)
 
     @property
     def power(self):
@@ -268,13 +275,14 @@ class Daikin:
         :return: tuple containing ssid and key of wifi network
         """
         wifi = self._get_wifi()
-        return wifi['ssid'], wifi['key']
+        return wifi["ssid"], wifi["key"]
 
     @property
     def datetime(self):
         """
         datetime on the device
-        :return: string of datetime on the device (yyyy/mm/dd HH:MM:SS), or None if not retrievable
+        :return: string of datetime on the device (yyyy/mm/dd HH:MM:SS),
+            or None if not retrievable
         """
         datetime = self._get_datetime()["cur"]
         return datetime if datetime != "-" else None
@@ -370,48 +378,52 @@ class Daikin:
         """
         return int(self._get_week()["today_runtime"])
 
-    def today_power_consumption_ex(self, ex=True, mode="heat"):
+    def _today_power_consumption_ex(self, ex=True, mode="heat"):
         """
         unit power consumption today (in Watts)
         :param ex: boolean indicating whether to take form '_ex'
-        :param mode: string from ("heat", "cool") describing mode of operation; ignored if ex==False
+        :param mode: string from ("heat", "cool") describing mode of operation;
+            ignored if ex==False
         :return: Watts of power consumption
         """
-        assert not ex or mode in ("heat", "cool"), 'mode should be from ("heat", "cool") if ex==True'
+        assert not ex or mode in (
+            "heat",
+            "cool",
+        ), 'mode should be from ("heat", "cool") if ex==True'
         res = self._get_week(ex=ex)
         if res is None:
             return None
-        res = int(res["week_%s" % mode if ex else "datas"].split("/")[0 if ex else -1])
+        res = int(res[f"week_{mode}" if ex else "datas"].split("/")[0 if ex else -1])
         return res * 100 if ex else res
 
     @property
-    def today_power_consumption(self, ex=False):
+    def today_power_consumption(self):
         """
         unit power consumption today (in Watts)
         :return: Watts of power consumption
         """
-        return self.today_power_consumption_ex(ex=ex, mode=None)
+        return self._today_power_consumption_ex(ex=False, mode=None)
 
-    def month_power_consumption(self, month=None):
+    def _month_power_consumption(self, month=None):
         """
         energy consumption
-        :param month: optional argument to request a particular month-of-year (january=1); None defaults to current month
+        :param month: request a particular month-of-year (january=1);
+            None defaults to current month
         :return: current-of-year energy consumption in kWh or None if not retrievable
         """
         if month is None:
-            dt = self.datetime
-            if dt is None:
+            if self.datetime is None:
                 return None
-            month = int(dt.split("/")[1])
-        return int(self._get_year()["this_year"].split("/")[month-1]) / 10.0
+            month = int(self.datetime.split("/")[1])
+        return int(self._get_year()["this_year"].split("/")[month - 1]) / 10.0
 
     @property
-    def current_month_power_consumption(self, month=None):
+    def current_month_power_consumption(self):
         """
         energy consumption
         :return: current month to date energy consumption in kWh or None if not retrievable
         """
-        return self.month_power_consumption(month=month)
+        return self._month_power_consumption()
 
     @property
     def price_int(self):
