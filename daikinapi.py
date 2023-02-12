@@ -1,7 +1,7 @@
 """
 Python module to get metrics from and control Daikin airconditioners
 """
-
+import datetime
 import logging
 import urllib.parse
 
@@ -194,9 +194,26 @@ class Daikin:
         """
         Example:
         ret=OK,sta=1,cur=2022/12/01 22:01:02,reg=eu,dst=1,zone=10
-        :return:
+        :return: dict
         """
         return self._get("/common/get_datetime")
+
+    def _set_datetime(self, dt=None):
+        """
+        Example:
+        ret=OK
+        :return: None
+        """
+        if dt is None:
+            dt = datetime.datetime.now()
+        dt = dt.astimezone(tz=datetime.timezone.utc)
+        data = {'lpw': '',
+                'date': '%d/%d/%d' % (dt.year, dt.month, dt.day),  # avoid zero-padding
+                'zone': 'GMT',
+                'time': '%d:%d:%d' % (dt.hour, dt.minute, dt.second),  # avoid zero-padding
+                }
+        data = urllib.parse.urlencode(data)
+        return self._set("/common/notify_date_time", data)
 
     def _do_reboot(self):
         return self._get("/common/reboot")
@@ -315,6 +332,10 @@ class Daikin:
     def wifi_settings(self, value):
         ssid, key = value
         self._set_wifi(ssid, key)
+
+    @datetime.setter
+    def datetime(self, value):
+        self._set_datetime(dt=value)
 
     def _control_set(self, key, value):
         """
