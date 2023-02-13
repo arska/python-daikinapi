@@ -198,19 +198,19 @@ class Daikin:
         """
         return self._get("/common/get_datetime")
 
-    def _set_datetime(self, dt=None):
+    def _set_datetime(self, date_time=None):
         """
         Example:
         ret=OK
         :return: None
         """
-        if dt is None:
-            dt = datetime.datetime.now()
-        dt = dt.astimezone(tz=datetime.timezone.utc)
+        if date_time is None:
+            date_time = datetime.datetime.now()
+        date_time = date_time.astimezone(tz=datetime.timezone.utc)
         data = {'lpw': '',
-                'date': '%d/%d/%d' % (dt.year, dt.month, dt.day),  # avoid zero-padding
+                'date': f'{date_time.year:d}/{date_time.month:d}/{date_time.day:d}',  # avoid zero-padding
                 'zone': 'GMT',
-                'time': '%d:%d:%d' % (dt.hour, dt.minute, dt.second),  # avoid zero-padding
+                'time': f'{date_time.hour:d}:{date_time.minute:d}:{date_time.second:d}',  # avoid zero-padding
                 }
         data = urllib.parse.urlencode(data)
         return self._set("/common/notify_date_time", data)
@@ -301,8 +301,8 @@ class Daikin:
         :return: string of datetime on the device (yyyy/mm/dd HH:MM:SS),
             or None if not retrievable
         """
-        datetime = self._get_datetime()["cur"]
-        return datetime if datetime != "-" else None
+        date_time = self._get_datetime()["cur"]
+        return date_time if date_time != "-" else None
 
     @power.setter
     def power(self, value):
@@ -335,7 +335,7 @@ class Daikin:
 
     @datetime.setter
     def datetime(self, value):
-        self._set_datetime(dt=value)
+        self._set_datetime(date_time=value)
 
     def _control_set(self, key, value):
         """
