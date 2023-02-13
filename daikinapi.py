@@ -207,11 +207,12 @@ class Daikin:
         if date_time is None:
             date_time = datetime.datetime.now()
         date_time = date_time.astimezone(tz=datetime.timezone.utc)
-        data = {'lpw': '',
-                'date': f'{date_time.year:d}/{date_time.month:d}/{date_time.day:d}',  # avoid zero-padding
-                'zone': 'GMT',
-                'time': f'{date_time.hour:d}:{date_time.minute:d}:{date_time.second:d}',  # avoid zero-padding
-                }
+        data = {
+            'lpw': '',
+            'date': f'{date_time.year:d}/{date_time.month:d}/{date_time.day:d}',
+            'zone': 'GMT',
+            'time': f'{date_time.hour:d}:{date_time.minute:d}:{date_time.second:d}',
+        }
         data = urllib.parse.urlencode(data)
         return self._set("/common/notify_date_time", data)
 
