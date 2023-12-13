@@ -247,9 +247,11 @@ class Daikin:
         """
         target temperature
         range of accepted values determined by mode: AUTO:18-31, HOT:10-31, COLD:18-33
-        :return: degrees centigrade
+        NOTE: when switched to fan-mode(7) the reported temperature target becomes '--'
+              when switched to drying-mode(2) the reported temperature target becomes 'M'
+        :return: string containing target temperature or '--' or 'M'
         """
-        return float(self._get_control()["stemp"])
+        return self._get_control()["stemp"]
 
     @property
     def target_humidity(self):
@@ -474,10 +476,10 @@ class Daikin:
     @property
     def inside_humidity(self):
         """
-        inside relative humidity
-        :return: percent
+        inside relative humidity or '-' if no humidity sensor is installed
+        :return: string containing relative humidity or '-'
         """
-        return float(self._get_sensor()["hhum"])
+        return self._get_sensor()["hhum"]
 
     @property
     def outside_temperature(self):
